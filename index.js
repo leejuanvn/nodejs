@@ -1,59 +1,53 @@
 const express = require('express');
-const axios = require('axios'); // Thư viện để gửi yêu cầu HTTP
+const axios = require('axios');
+
 const app = express();
-const PORT = process.env.PORT || 3000;
+const port = 3000;
 
-app.use(express.json());
+app.use(express.json()); // Để có thể nhận dữ liệu JSON
 
-let dataQueue = []; // Hàng đợi để lưu trữ dữ liệu
-let isProcessing = false; // Biến để kiểm soát việc gửi dữ liệu
+// Mảng để lưu trữ yêu cầu
+const requestQueue = [];
+let isProcessing = false;
 
-app.post('/webhook', (req, res) => {
-    const receivedData = req.body;
-    console.log('Webhook received:', receivedData);
-    dataQueue.push(receivedData); // Thêm dữ liệu vào hàng đợi
-    res.send({ status: 'Data received' });
-
-    // Bắt đầu xử lý nếu chưa có quá trình nào đang diễn ra
-    if (!isProcessing) {
-        processQueue();
-    }
-});
-
-// Hàm gửi dữ liệu đến Google Sheets
-const sendDataToGoogleSheets = async (data) => {
+// Hàm gửi yêu cầu
+async function sendRequest(request) {
     try {
-        const response = await axios.post('https://script.google.com/macros/s/AKfycbweaVOX6Tkv9XKRCoGxhz2owEmEHf0lV26TrL1kBJfcrvNgy5hUvKohwfCNpra7RoC3TA/exec', data);
-        console.log('Data sent to Google Sheets:', response.data);
+        // Thay đổi URL và phương thức theo nhu cầu của bạn
+        const response = await axios.post('https://script.google.com/macros/s/AKfycbweaVOX6Tkv9XKRCoGxhz2owEmEHf0lV26TrL1kBJfcrvNgy5hUvKohwfCNpra7RoC3TA/exec', { data: request });
+        console.log(`Gửi: ${request}, Nhận: ${response.data}`);
     } catch (error) {
-        console.error('Error sending data to Google Sheets:', error.message);
-        throw new Error('Failed to send data to Google Sheets');
+        console.error(`Lỗi khi gửi yêu cầu: ${request}`, error.message);
     }
-};
+}
 
 // Hàm xử lý hàng đợi
-const processQueue = async () => {
-    if (dataQueue.length === 0) {
-        isProcessing = false; // Đánh dấu đã hoàn thành
-        return;
+async function processQueue() {
+    if (isProcessing) return; // Nếu đang xử lý thì không làm gì thêm
+    isProcessing = true;
+
+    while (requestQueue.length > 0) {
+        const request = requestQueue.shift(); // Lấy yêu cầu đầu tiên trong hàng đợi
+        await sendRequest(request);
+        await new Promise(resolve => setTimeout(resolve, 500)); // Chờ 500ms trước khi gửi yêu cầu tiếp theo
     }
 
-    isProcessing = true; // Đánh dấu đang xử lý
-    const dataToSend = dataQueue.shift(); // Lấy dữ liệu đầu tiên trong hàng đợi
+    isProcessing = false; // Kết thúc quá trình xử lý
+}
 
-    try {
-        // Gửi dữ liệu đến Google Sheets
-        await sendDataToGoogleSheets(dataToSend);
-    } catch (error) {
-        console.error('Failed to send data:', error.message);
-    } finally {
-        // Gọi lại hàm xử lý hàng đợi sau một khoảng thời gian
-        setTimeout(processQueue, 1000); // Gửi yêu cầu tiếp theo sau 1 giây
+// Định nghĩa endpoint nhận yêu cầu
+app.post('/webhook', (req, res) => {
+    const { request } = req.body; // Nhận yêu cầu từ body
+    if (request) {
+        requestQueue.push(request); // Thêm yêu cầu vào hàng đợi
+        res.status(200).send(`Yêu cầu "${request}" đã được thêm vào hàng đợi.`);
+        processQueue(); // Bắt đầu xử lý hàng đợi nếu chưa có quá trình nào đang chạy
+    } else {
+        res.status(400).send('Vui lòng cung cấp yêu cầu hợp lệ.');
     }
-};
-
-app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
 });
 
-module.exports = app; // Xuất ứng dụng để Vercel có thể sử dụng
+// Khởi động server
+app.listen(port, () => {
+    console.log(`Server đang chạy tại http://localhost:${port}`);
+});
