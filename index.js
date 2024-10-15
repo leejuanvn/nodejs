@@ -2,17 +2,21 @@ const express = require('express');
 const axios = require('axios');
 
 const app = express();
-const PORT = process.env.PORT || 3000; // Sử dụng biến môi trường PORT
+const PORT = process.env.PORT || 3000;
 
 // Middleware để nhận JSON
 app.use(express.json());
+
+// Endpoint gốc
+app.get('/', (req, res) => {
+    res.send('Welcome to the Node.js API! Use /receive-json to send JSON data.');
+});
 
 // Endpoint nhận JSON
 app.post('/receive-json', (req, res) => {
     const receivedData = req.body;
     console.log('Received JSON:', receivedData);
 
-    // Gửi JSON về Google Apps Script
     const sendData = { message: 'Data received', data: receivedData };
 
     setInterval(() => {
@@ -23,7 +27,7 @@ app.post('/receive-json', (req, res) => {
             .catch(error => {
                 console.error('Error sending JSON:', error);
             });
-    }, 1000); // 1 giây
+    }, 1000);
 
     res.send({ status: 'Data received, will send to Apps Script every second' });
 });
