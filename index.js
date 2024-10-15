@@ -45,7 +45,7 @@ const sendDataToClient = async () => {
 };
 
 // Bắt đầu gửi dữ liệu
-setInterval(sendDataToClient, 500); // Thực hiện kiểm tra hàng đợi mỗi nửa giây
+setInterval(sendDataToClient, 1000); // Thực hiện kiểm tra hàng đợi mỗi giây
 
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
