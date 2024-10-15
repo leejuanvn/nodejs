@@ -32,16 +32,22 @@ const sendDataToClient = async () => {
     if (dataQueue.length === 0 || isSending) return; // Nếu không có dữ liệu hoặc đang gửi
 
     isSending = true; // Đánh dấu đang gửi
-    const dataToSend = dataQueue.shift(); // Lấy dữ liệu đầu tiên trong hàng đợi
 
-    try {
-        // Gửi dữ liệu đến Google Apps Script
-        await sendDataToAppsScript(dataToSend);
-    } catch (error) {
-        console.error('Failed to send data:', error.message);
-    } finally {
-        isSending = false; // Đánh dấu đã gửi xong
+    // Gửi tối đa 5 yêu cầu mỗi giây (hoặc điều chỉnh theo nhu cầu)
+    const maxRequestsPerSecond = 5;
+    const requestsToSend = Math.min(maxRequestsPerSecond, dataQueue.length);
+
+    for (let i = 0; i < requestsToSend; i++) {
+        const dataToSend = dataQueue.shift(); // Lấy dữ liệu đầu tiên trong hàng đợi
+        try {
+            // Gửi dữ liệu đến Google Apps Script
+            await sendDataToAppsScript(dataToSend);
+        } catch (error) {
+            console.error('Failed to send data:', error.message);
+        }
     }
+
+    isSending = false; // Đánh dấu đã gửi xong
 };
 
 // Bắt đầu gửi dữ liệu
