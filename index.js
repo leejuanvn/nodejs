@@ -13,7 +13,6 @@ let isProcessing = false;
 // Hàm gửi yêu cầu
 async function sendRequest(request) {
     try {
-        // Thay đổi URL và phương thức theo nhu cầu của bạn
         const response = await axios.post('https://script.google.com/macros/s/AKfycbweaVOX6Tkv9XKRCoGxhz2owEmEHf0lV26TrL1kBJfcrvNgy5hUvKohwfCNpra7RoC3TA/exec', { data: request });
         console.log(`Gửi: ${request}, Nhận: ${response.data}`);
     } catch (error) {
@@ -37,14 +36,10 @@ async function processQueue() {
 
 // Định nghĩa endpoint nhận yêu cầu
 app.post('/webhook', (req, res) => {
-    const { request } = req.body; // Nhận yêu cầu từ body
-    if (request) {
-        requestQueue.push(request); // Thêm yêu cầu vào hàng đợi
-        res.status(200).send(`Yêu cầu "${request}" đã được thêm vào hàng đợi.`);
-        processQueue(); // Bắt đầu xử lý hàng đợi nếu chưa có quá trình nào đang chạy
-    } else {
-        res.status(400).send('Vui lòng cung cấp yêu cầu hợp lệ.');
-    }
+    const request = req.body; // Nhận yêu cầu từ body
+    requestQueue.push(request); // Thêm yêu cầu vào hàng đợi
+    res.status(200).send(`Yêu cầu đã được thêm vào hàng đợi.`);
+    processQueue(); // Bắt đầu xử lý hàng đợi nếu chưa có quá trình nào đang chạy
 });
 
 // Khởi động server
