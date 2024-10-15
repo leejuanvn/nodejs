@@ -2,14 +2,14 @@
   "version": 2,
   "builds": [
     {
-      "src": "index.js",  // Thay đổi tên file nếu cần
+      "src": "index.js",
       "use": "@vercel/node"
     }
   ],
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "index.js"  // Chỉ định file chính
+      "dest": "index.js"
     }
   ]
 }
