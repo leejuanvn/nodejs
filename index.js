@@ -22,7 +22,8 @@ const sendDataToAppsScript = async (data) => {
         const response = await axios.post('https://script.google.com/macros/s/AKfycbweaVOX6Tkv9XKRCoGxhz2owEmEHf0lV26TrL1kBJfcrvNgy5hUvKohwfCNpra7RoC3TA/exec', data);
         console.log('Data sent to Apps Script:', response.data);
     } catch (error) {
-        console.error('Error sending data to Apps Script:', error);
+        console.error('Error sending data to Apps Script:', error.message);
+        throw new Error('Failed to send data to Apps Script');
     }
 };
 
@@ -33,13 +34,14 @@ const sendDataToClient = async () => {
     isSending = true; // Đánh dấu đang gửi
     const dataToSend = dataQueue.shift(); // Lấy dữ liệu đầu tiên trong hàng đợi
 
-    // Gửi dữ liệu đến Google Apps Script
-    await sendDataToAppsScript(dataToSend);
-
-    setTimeout(() => {
+    try {
+        // Gửi dữ liệu đến Google Apps Script
+        await sendDataToAppsScript(dataToSend);
+    } catch (error) {
+        console.error('Failed to send data:', error.message);
+    } finally {
         isSending = false; // Đánh dấu đã gửi xong
-        sendDataToClient(); // Gọi lại hàm để gửi dữ liệu tiếp theo
-    }, 500); // Gửi mỗi nửa giây
+    }
 };
 
 // Bắt đầu gửi dữ liệu
